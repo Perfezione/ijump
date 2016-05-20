@@ -17,16 +17,37 @@ class UserModel extends Model
         }
     }
     
-   public function createUser() {
-       $name = $_POST['name'];
-       $password = $_POST['password'];
-       $phonenumber = $_POST['phonenumber'];
-       $weight = $_POST['weight'];
-       
+   public function createUser(Slim\Http\Request $request) {
+       $name = $request->getParam('name');
+       $password = $request->getParam('password');
+       $phonenumber = $request->getParam('phonenumber');
+       $weight = $request->getParam('weight');
        
         $this->dbconn->query("Insert into user (phonenumber, name, password, weight)"
                 . "VALUES ('" . $phonenumber . "', '" . $name . "', '" . $password . "', '" . $weight . "')");
     } 
+    
+    public function validateUser(Slim\Http\Request $request) {
+        $user = $request->getParam('user');
+        $hash = $request->getParam('password');
+        
+        $hash = '$2y$07$BCryptRequires22Chrcte/VlQH0piJtjXl.0t1XkA8pw9dMXTpOq';
+ 
+     $statement = $this->dbconn->prepare("SELECT * FROM user 
+                                       WHERE name = :name
+                                       AND password = :password");
+     
+    $statement->execute(array('name' => $user, 'password' => $hash));
+        $row = $statement->fetch();
+        
+        $result = false;
+        if($row) {
+            $result = true;
+        }
+        
+        echo json_encode(array('result' => $result));
+        
+    }
     
     
 }
@@ -108,7 +129,8 @@ $app->post('/user', array($usermodel, 'createUser'));
 $app->get('/session', array($sessionModel, 'getSession'));
 $app->post('/session', array($sessionModel, 'createSession'));
  
-        
+$app->get('/login', array($usermodel, 'validateUser'));
+      
 $app->run();
 
 
